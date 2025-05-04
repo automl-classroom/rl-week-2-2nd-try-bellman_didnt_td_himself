@@ -47,12 +47,12 @@ class ValueIteration(AbstractAgent):
         self.seed = seed
 
         # TODO: Extract MDP components from the environment
-        self.S = None
-        self.A = None
-        self.T = None
-        self.R_sa = None
-        self.n_states = None
-        self.n_actions = None
+        self.S = env.states
+        self.A = env.actions
+        self.T = env.get_transition_matrix()
+        self.R_sa = env.get_reward_per_action()
+        self.n_states = self.R_sa.shape[0]
+        self.n_actions = self.R_sa.shape[1]
 
         # placeholders
         self.V = np.zeros(self.n_states, dtype=float)
@@ -82,6 +82,8 @@ class ValueIteration(AbstractAgent):
         """Choose action = π(observation). Runs update if needed."""
         if not self.policy_fitted:
             self.update_agent()
+
+        return (self.pi[observation], {})
 
         # TODO: Return action from learned policy
         raise NotImplementedError("predict_action() is not implemented.")
@@ -124,11 +126,22 @@ def value_iteration(
     """
     n_states, n_actions = R_sa.shape
     V = np.zeros(n_states, dtype=float)
-    # rng = np.random.default_rng(seed)  uncomment this
+    rng = np.random.default_rng(seed)
     pi = None
 
-    # TODO: update V using the Q values until convergence
+    V_old = np.ones_like(V)
+    while not np.max(np.abs(V - V_old)) < epsilon:
+        Q = R_sa + gamma * np.einsum("sak,k->sa", T, V)
 
-    # TODO: Extract the greedy policy from V and update pi
+        V_old = V.copy()
+        V = np.max(Q, axis=1)
+
+    Q_final = R_sa + gamma * np.einsum("sak,k->sa", T, V)
+    pi = np.empty(n_states, dtype=int)
+
+    for s in range(n_states):  # CHATGPT becuz lazy
+        q_s = Q_final[s]  # shape (n_actions,)
+        best = np.flatnonzero(q_s == q_s.max())
+        pi[s] = rng.choice(best)
 
     return V, pi
