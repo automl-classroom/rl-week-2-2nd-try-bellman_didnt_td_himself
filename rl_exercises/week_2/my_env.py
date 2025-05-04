@@ -122,7 +122,7 @@ class MyEnv(gym.Env):
         info : dict
             An empty info dictionary.
         """
-        if "MIRROR" in options:
+        if options is not None and "MIRROR" in options:
             self.rewards = [x * -1 for x in self.rewards]
         self.current_steps = 0
         self.position = 2
@@ -179,7 +179,7 @@ class MyEnv(gym.Env):
 
         if self.position + direction_offset > self.states[-1]:
             pass
-        elif self.position - direction_offset < 0:
+        elif self.position + direction_offset < 0:
             pass
         else:
             self.position += direction_offset
